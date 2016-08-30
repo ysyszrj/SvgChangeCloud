@@ -16,14 +16,18 @@
         footer{
             text-align: center;
         }
+        #control{
+            text-align: center;
+        }
     </style>
 
 </head>
 <body>
 <h1>SvgCloud Example</h1>
 <div id="my_favorite_latin_words" style=""></div>
+<div id="control"> <button id="w1">one</button> <button id="w2">bbb</button> </div>
 <footer><a href="https://github.com/ysyszrj/SvgCloud">Github</a>  <a href="http://ysyszrj.info/resume/">Resume</a>   </footer>
-</body>
+
 <!--<script type="text/javascript" src="jquery.js"></script>-->
 <!--<script type="text/javascript" src="svgcloud-1.0.0.js"></script>-->
 <script type="text/javascript" src="main.js"></script>
@@ -74,11 +78,19 @@
     ];
     var color = "#389";
     var sc = SvgCloud("#my_favorite_latin_words",{font_color: color});
-    var list1 = word_list.slice(0,5);
-    var list2 = word_list.slice(3,7);
-    sc.drawWordCloud(list1);
-    sc.drawWordCloud(list2);
+    var list1 = word_list.slice(0,7);
+    var list2 = word_list.slice(4,10);
+    var b1 = document.querySelector("#w1");
+    b1.onclick = function () {
+        sc.drawWordCloud(list1);
+    }
+    var b2 = document.querySelector("#w2");
+    b2.onclick=function () {
+        sc.drawWordCloud(list2);
+    };
+
 //    sc.drawWordCloud(list2)
     console.log(sc.getSelector());
 </script>
+</body>
 </html>
