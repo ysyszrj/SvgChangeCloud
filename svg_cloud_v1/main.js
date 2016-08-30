@@ -10,6 +10,7 @@
         return wc;
     };
 
+    //这一段是为了兼容jquery
     if (typeof $ === "undefined") {
         var jquery = function (selector) {
             var reg = /<([A-Za-z]+)>/;
@@ -24,7 +25,7 @@
             _compatible.call(dom);
             return dom;
         };
-        
+
         var $ = jquery;
         jquery.extend = function () {
             var n = arguments.length;
@@ -47,17 +48,20 @@
             }
             return false;
         };
-        
+
         jquery.each = function (array, callback) {
-            for(var i=0;i<array.length;i++){
-                callback(i,array[i]);
+            for (var i = 0; i < array.length; i++) {
+                callback(i, array[i]);
             }
         };
     }
 
     function Construct(selector, options) {
+        /*
+        初始化词云操作的构造函数
+         */
         this.selector = selector;
-        var $this =  $(selector);
+        var $this = $(selector);
 
         var default_options = {
             width: $this.width(),
@@ -106,15 +110,23 @@
         }
 
         // Sort word_array from the word with the highest weight to the one with the lowest
-        word_array.sort(function(a, b) { if (a.weight < b.weight) {return 1;} else if (a.weight > b.weight) {return -1;} else {return 0;} });
+        word_array.sort(function (a, b) {
+            if (a.weight < b.weight) {
+                return 1;
+            } else if (a.weight > b.weight) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
 
-        weightGap=word_array[0].weight-word_array[word_array.length-1].weight;
-        var step = (options.shape === "rectangular") ? 18.0 : 2.0,aspect_ratio = options.width / options.height;
+        weightGap = word_array[0].weight - word_array[word_array.length - 1].weight;
+        var step = (options.shape === "rectangular") ? 18.0 : 2.0, aspect_ratio = options.width / options.height;
         var already_placed_words = [], aspect_ratio = options.width / options.height;
 
-        
+
         var deleteDom = function (save_words) {
-            for(var word in save_words) {
+            for (var word in save_words) {
                 if (save_words[word].flag == -1) {
                     svg.removeChild(save_words[word]);
                     delete  save_words[word];
@@ -122,58 +134,59 @@
             }
         };
 
-        var adjustOverlapped = function (a,b) {
-            var aleft=parseInt(a.attr("x"));
-            var abotton=parseInt(a.attr("y"));
-            var awidth=parseInt(a.css("width"));
-            var aheight=parseInt(a.css("height"));
+        var adjustOverlapped = function (a, b) {
+            var aleft = parseInt(a.attr("x"));
+            var abotton = parseInt(a.attr("y"));
+            var awidth = parseInt(a.css("width"));
+            var aheight = parseInt(a.css("height"));
 
-            var bleft=parseInt(b.attr("x"));
-            var bbotton=parseInt(b.attr("y"));
-            var bwidth=parseInt(b.css("width"));
-            var bheight=parseInt(b.css("height"));
-            var acx=aleft+awidth/2;
-            var acy=abotton-aheight/2;
-            var bcx=bleft+bwidth/2;
-            var bcy=bbotton-bheight/2;
+            var bleft = parseInt(b.attr("x"));
+            var bbotton = parseInt(b.attr("y"));
+            var bwidth = parseInt(b.css("width"));
+            var bheight = parseInt(b.css("height"));
+            var acx = aleft + awidth / 2;
+            var acy = abotton - aheight / 2;
+            var bcx = bleft + bwidth / 2;
+            var bcy = bbotton - bheight / 2;
 
-            var disx=Math.abs(acx-bcx);
-            var disy=Math.abs(acy-bcy);
-            var tarw=(awidth+bwidth)/2;
-            var tarh=(aheight+bheight)/2;
+            var disx = Math.abs(acx - bcx);
+            var disy = Math.abs(acy - bcy);
+            var tarw = (awidth + bwidth) / 2;
+            var tarh = (aheight + bheight) / 2;
 
-            if(disx<tarw&&disy<tarh){//覆盖的话return true 没有覆盖 return false
-                var dz=Math.sqrt(disx*disx+disy*disy);
-                var rr=5;
-                var dx=(acx-bcx)/dz*rr;
-                var dy=(acy-bcy)/dz*rr;
+            if (disx < tarw && disy < tarh) {//覆盖的话return true 没有覆盖 return false
+                var dz = Math.sqrt(disx * disx + disy * disy);
+                var rr = 5;
+                var dx = (acx - bcx) / dz * rr;
+                var dy = (acy - bcy) / dz * rr;
 
-                a.attr("x",aleft+dx).attr("y",abotton+dy);
-                b.attr("x",bleft-dx).attr("y",bbotton-dy);
-
-                //需要挪的位置
+                a.attr("x", aleft + dx).attr("y", abotton + dy);
+                b.attr("x", bleft - dx).attr("y", bbotton - dy);
 
                 return true;
-            }else{
+            } else {
                 return false;
             }
         };
 
         var changeDom = function (save_words, word_array) {
-            for(var word in save_words){
-                if(save_words[word].flag == 1){
-                    var weight=Math.round((word.weight-word_array[word_array.length-1].weight)/weightGap*9)+1;
+            /*
+
+             */
+            for (var word in save_words) {
+                if (save_words[word].flag == 1) {
+                    var weight = Math.round((word.weight - word_array[word_array.length - 1].weight) / weightGap * 9) + 1;
                     var word_span = save_words[word].childNodes[0];
                     already_placed_words.push(word_span);
-                    word_span.css("font-size",weight*5);
+                    word_span.css("font-size", weight * 5);
                 }
             }
             var tag = false;
-            while(!tag){
+            while (!tag) {
                 tag = true;
-                for(var i=0;i<already_placed_words.length;i++){
-                    for(var j=0;j<i;j++){
-                        if(adjustOverlapped(already_placed_words[i],already_placed_words[j])){
+                for (var i = 0; i < already_placed_words.length; i++) {
+                    for (var j = 0; j < i; j++) {
+                        if (adjustOverlapped(already_placed_words[i], already_placed_words[j])) {
                             tag = false;
                         }
                     }
@@ -182,23 +195,23 @@
 
         };
 
-        // 状态声明 -1 1是存在 0是新生成的元素
-        var wordsChange = function (save_words,word_array) {
-            for(var i=0;i<word_array.length;i++){
+
+        var wordsChange = function (save_words, word_array) {
+            // 状态声明flag= -1表示这个单词在上次绘制中存在，这次要删除 flag= 1表示需要改变词语的weight
+            for (var i = 0; i < word_array.length; i++) {
                 var words_text = word_array[i].text;
-                if(save_words[words_text]){
+                if (save_words[words_text]) {
                     save_words[words_text].flag = 1;
-                }else{
+                } else {
                     new_list.push(word_array[i]);
                 }
 
             }
         };
-        var drawOneWord  = function (index, word) {
-            // var cloud_namespace = this.cloud_namespace;
-            // var word_array = this.word_array;
-            // var options  = this.options;
-            // var svg = this.svg;
+        var drawOneWord = function (index, word) {
+         /*
+         绘制一个单词的逻辑
+          */
 
             var word_id = cloud_namespace + "_word_" + index,
                 angle = 6.28 * Math.random(),
@@ -207,10 +220,8 @@
                 // Only used if option.shape == 'rectangular'
                 steps_in_direction = 0.0,
                 quarter_turns = 0.0,
-
                 weight = 5,
                 custom_class = "",
-                inner_html = "",
                 word_span;
 
             // Extend word html options with defaults
@@ -235,19 +246,14 @@
             word_span.setAttribute("id", word.html.id);
             word_span.setAttribute("fill", options.font_color);
             word_span.style.fontSize = weight * 5;
-            // ("font-size",weight*5);
-            // var word_span = $("<text></text>").attr("class",'w' + weight + " " + custom_class)
-            //   .attr("id",word.html.id).attr("fill",options.font_color).css("font-size",weight*5);
+
             var wg = document.createElementNS("http://www.w3.org/2000/svg", "g");
             save_words[word.text] = wg;
             wg.flag = -1;
             wg.setAttribute("class", "wd");
             wg.appendChild(word_span);
-            // var wg = $("<g></g>").attr("class","wd").append(word_span);
             svg.appendChild(wg);
             word_span.textContent = word.text;
-
-            //***********************add my code***************************
 
             var rect = word_span.getBoundingClientRect();
             var width = parseInt(rect.width),
@@ -257,8 +263,7 @@
 
             word_span.setAttribute("x", left);
             word_span.setAttribute("y", top);
-            // word_span.attr("x",left);
-            // word_span.attr("y",top);
+
             while (hitTest(word_span, already_placed_words)) {
                 // option shape is 'rectangular' so move the word in a rectangular spiral
                 if (options.shape === "rectangular") {
@@ -288,10 +293,8 @@
                     left = options.center.x - (width / 2.0) + (radius * Math.cos(angle)) * aspect_ratio;
                     top = options.center.y + radius * Math.sin(angle) - (height / 2.0);
                 }
-                // word_span.attr("x",left);
                 word_span.setAttribute("x", left);
                 word_span.setAttribute("y", top);
-                // word_span.attr("y",top);
             }
             if (options.removeOverflowing && (left < 0 || top < 0 || (left + width) > options.width || (top + height) > options.height)) {
                 word_span.remove();
@@ -307,51 +310,53 @@
 
 
         };
+
+        var drawOneWordDelayed = function (index) {
+            /*
+            延迟绘制单词
+             */
+            index = index || 0;
+            if (!$this.is(':visible')) { // if not visible then do not attempt to draw
+                setTimeout(function () {
+                    drawOneWordDelayed(index);
+                }, 10);
+                return;
+            }
+            if (index < word_array.length) {
+                drawOneWord(index, word_array[index]);
+                setTimeout(function () {
+                    drawOneWordDelayed(index + 1);
+                }, 10);
+            } else {
+                if ($.isFunction(options.afterCloudRender)) {
+                    options.afterCloudRender.call($this);
+                }
+            }
+        };
         // Iterate drawOneWord on every word. The way the iteration is done depends on the drawing mode (delayedMode is true or false)
         if (options.delayedMode) {
             drawOneWordDelayed();
         }
         else {
-            wordsChange(save_words,word_array)
+            wordsChange(save_words, word_array)
             deleteDom(save_words);
             changeDom(save_words, word_array);
-            for(var i=0;i<new_list.length;i++){
-                drawOneWord(i,new_list[i]);
+            for (var i = 0; i < new_list.length; i++) {
+                drawOneWord(i, new_list[i]);
             }
 
-            // $.each(word_array, this.drawOneWord);
             if ($.isFunction(options.afterCloudRender)) {
                 options.afterCloudRender.call($this);
             }
         }
-        // this.pre_words = word_array;
 
     };
-
-    var drawOneWordDelayed = function (index) {
-        index = index || 0;
-        if (!$this.is(':visible')) { // if not visible then do not attempt to draw
-            setTimeout(function () {
-                drawOneWordDelayed(index);
-            }, 10);
-            return;
-        }
-        if (index < word_array.length) {
-            drawOneWord(index, word_array[index]);
-            setTimeout(function () {
-                drawOneWordDelayed(index + 1);
-            }, 10);
-        } else {
-            if ($.isFunction(options.afterCloudRender)) {
-                options.afterCloudRender.call($this);
-            }
-        }
-    };
-
 
     // Helper function to test if an element overlaps others
     var hitTest = function (elem, other_elems) {
-        // Pairwise overlap detection
+       /*
+       检测当前要添加的词语是否要碰撞
+        */
 
         var i = 0;
         // Check elements for overlap one by one, stop and return false as soon as an overlap is found
@@ -363,6 +368,9 @@
         return false;
     };
     var overlapping = function (a, b) {
+        /*
+        检测两个单词是否碰撞
+         */
         var aleft = parseInt(a.getAttribute("x"));
         var abotton = parseInt(a.getAttribute("y"));
 
@@ -380,8 +388,8 @@
         var bcx = bleft + bwidth / 2;
         var bcy = bbotton - bheight / 2;
 
-        if (Math.abs(2.0 * acx - 2.0 * bcx) < awidth + bwidth+10) {
-            if (Math.abs(2.0 * acy - 2.0 * bcy) < aheight + bheight+10) {
+        if (Math.abs(2.0 * acx - 2.0 * bcx) < awidth + bwidth + 10) {
+            if (Math.abs(2.0 * acy - 2.0 * bcy) < aheight + bheight + 10) {
                 //overlap
                 return true;
             }
@@ -390,6 +398,9 @@
     };
 
     function _compatible() {
+        /*
+        这个函数是为了兼容早先jquery版本
+         */
 
         var $this = this;
         this.width = function () {
@@ -408,7 +419,6 @@
             }
         };
 
-        // #83，#356，第一步，小驼峰
         var rmsPrefix = /^-ms-/,
             rdashAlpha = /-([\da-z])/gi,
             fcamelCase = function (all, letter) {
@@ -484,11 +494,8 @@
         getSelector: function () {
             return this.selector;
         },
-        drawWordCloud: _drawWordCloud,
-        // drawOneWord:drawOneWord
+        drawWordCloud: _drawWordCloud
     };
-
-
 
     Construct.prototype = prop;
     exports.SvgCloud = WordCloud;
