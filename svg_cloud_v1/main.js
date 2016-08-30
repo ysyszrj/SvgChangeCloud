@@ -90,6 +90,7 @@
     }
 
     var _drawWordCloud = function (word_array) {
+        var new_list = [];
         var save_words = this.save_words;
         var svg = this.svg;
         var cloud_namespace = this.cloud_namespace;
@@ -111,16 +112,88 @@
         var step = (options.shape === "rectangular") ? 18.0 : 2.0,aspect_ratio = options.width / options.height;
         var already_placed_words = [], aspect_ratio = options.width / options.height;
 
-        var deleteDom = function (word_array) {
-            for(var i=0;i<word_array.length;i++){
-                if(save_words[word_array[i].text]){
-                    var words_text = word_array[i].text;
-                    svg.removeChild(save_words[words_text]);
-                    delete  save_words[words_text];
+        
+        var deleteDom = function (save_words) {
+            for(var word in save_words) {
+                if (save_words[word].flag == -1) {
+                    svg.removeChild(save_words[word]);
+                    delete  save_words[word];
                 }
             }
-        }
+        };
 
+        var adjustOverlapped = function (a,b) {
+            var aleft=parseInt(a.attr("x"));
+            var abotton=parseInt(a.attr("y"));
+            var awidth=parseInt(a.css("width"));
+            var aheight=parseInt(a.css("height"));
+
+            var bleft=parseInt(b.attr("x"));
+            var bbotton=parseInt(b.attr("y"));
+            var bwidth=parseInt(b.css("width"));
+            var bheight=parseInt(b.css("height"));
+            var acx=aleft+awidth/2;
+            var acy=abotton-aheight/2;
+            var bcx=bleft+bwidth/2;
+            var bcy=bbotton-bheight/2;
+
+            var disx=Math.abs(acx-bcx);
+            var disy=Math.abs(acy-bcy);
+            var tarw=(awidth+bwidth)/2;
+            var tarh=(aheight+bheight)/2;
+
+            if(disx<tarw&&disy<tarh){//覆盖的话return true 没有覆盖 return false
+                var dz=Math.sqrt(disx*disx+disy*disy);
+                var rr=5;
+                var dx=(acx-bcx)/dz*rr;
+                var dy=(acy-bcy)/dz*rr;
+
+                a.attr("x",aleft+dx).attr("y",abotton+dy);
+                b.attr("x",bleft-dx).attr("y",bbotton-dy);
+
+                //需要挪的位置
+
+                return true;
+            }else{
+                return false;
+            }
+        };
+
+        var changeDom = function (save_words, word_array) {
+            for(var word in save_words){
+                if(save_words[word].flag == 1){
+                    var weight=Math.round((word.weight-word_array[word_array.length-1].weight)/weightGap*9)+1;
+                    var word_span = save_words[word].childNodes[0];
+                    already_placed_words.push(word_span);
+                    word_span.css("font-size",weight*5);
+                }
+            }
+            var tag = false;
+            while(!tag){
+                tag = true;
+                for(var i=0;i<already_placed_words.length;i++){
+                    for(var j=0;j<i;j++){
+                        if(adjustOverlapped(already_placed_words[i],already_placed_words[j])){
+                            tag = false;
+                        }
+                    }
+                }
+            }
+
+        };
+
+        // 状态声明 -1 1是存在 0是新生成的元素
+        var wordsChange = function (save_words,word_array) {
+            for(var i=0;i<word_array.length;i++){
+                var words_text = word_array[i].text;
+                if(save_words[words_text]){
+                    save_words[words_text].flag = 1;
+                }else{
+                    new_list.push(word_array[i]);
+                }
+
+            }
+        };
         var drawOneWord  = function (index, word) {
             // var cloud_namespace = this.cloud_namespace;
             // var word_array = this.word_array;
@@ -167,8 +240,9 @@
             //   .attr("id",word.html.id).attr("fill",options.font_color).css("font-size",weight*5);
             var wg = document.createElementNS("http://www.w3.org/2000/svg", "g");
             save_words[word.text] = wg;
+            wg.flag = -1;
             wg.setAttribute("class", "wd");
-            wg.appendChild(word_span)
+            wg.appendChild(word_span);
             // var wg = $("<g></g>").attr("class","wd").append(word_span);
             svg.appendChild(wg);
             word_span.textContent = word.text;
@@ -238,9 +312,11 @@
             drawOneWordDelayed();
         }
         else {
-            deleteDom(word_array);
-            for(var i=0;i<word_array.length;i++){
-                drawOneWord(i,word_array[i]);
+            wordsChange(save_words,word_array)
+            deleteDom(save_words);
+            changeDom(save_words, word_array);
+            for(var i=0;i<new_list.length;i++){
+                drawOneWord(i,new_list[i]);
             }
 
             // $.each(word_array, this.drawOneWord);
@@ -320,7 +396,7 @@
             return pCss($this, "width");
         };
         this.height = function () {
-            console.log(this);
+            // console.log(this);
             return pCss($this, "height");
         };
         this.attr = function (key, value) {
