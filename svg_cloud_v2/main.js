@@ -17,7 +17,7 @@
             var res = reg.exec(selector);
             var dom;
             if (res) {
-                //属于<a>这种的类型？
+                //属于<a>这种的类型
                 dom = document.createElement(res[1]);
             } else {
                 dom = document.querySelector(selector);
@@ -173,14 +173,18 @@
             /*
 
              */
-            for (var word in save_words) {
-                if (save_words[word].flag == 1) {
-                    var weight = Math.round((word.weight - word_array[word_array.length - 1].weight) / weightGap * 9) + 1;
-                    var word_span = save_words[word].childNodes[0];
-                    already_placed_words.push(word_span);
-                    word_span.css("font-size", weight * 5);
+            for(var i=0;i<word_array.length;i++){
+                var word = word_array[i].text;
+                if(typeof save_words[word]!=="undefined"){
+                    if (save_words[word].flag == 1) {
+                        var weight = Math.round((word_array[i].weight - word_array[word_array.length - 1].weight) / weightGap * 9) + 1;
+                        var word_span = save_words[word].childNodes[0];
+                        already_placed_words.push(word_span);
+                        word_span.style.fontSize = weight * 5;
+                    }
                 }
             }
+
             var tag = false;
             while (!tag) {
                 tag = true;
